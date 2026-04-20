@@ -65,6 +65,12 @@ func (h *SeriesHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
+	
+	if r.Header.Get("Content-Type") != "application/json" {
+		writeError(w, http.StatusUnsupportedMediaType, "content-type debe ser application/json")
+		return
+	}
+	
 	var input models.SeriesInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Printf("create decode: %v", err)
@@ -104,6 +110,12 @@ func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		writeError(w, http.StatusUnsupportedMediaType, "content-type debe ser application/json")
+		return
+	}
+
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "id inválido")
