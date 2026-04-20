@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"seriestracker/internal/models"
 )
@@ -16,11 +17,20 @@ type SeriesHandler struct {
 }
 
 func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.DB.Query(`
+	query := `
 		SELECT id, name, current_episode, total_episodes, image_path, created_at, updated_at
 		FROM series
-		ORDER BY id DESC
-	`)
+	`
+	args := []any{}
+
+	if q := strings.TrimSpace(r.URL.Query().Get("q")); q != "" {
+		query += ` WHERE LOWER(name) LIKE LOWER(?)`
+		args = append(args, "%"+q+"%")
+	}
+
+	query += ` ORDER BY id DESC`
+
+	rows, err := h.DB.Query(query, args...)
 	if err != nil {
 		log.Printf("list query: %v", err)
 		writeError(w, http.StatusInternalServerError, "error al consultar series")
