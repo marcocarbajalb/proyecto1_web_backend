@@ -7,6 +7,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+//go:embed schema.sql
 var schema string
 
 // Abre la conexión a SQLite y verifica que responde
