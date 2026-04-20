@@ -8,6 +8,7 @@ import (
 
 	"seriestracker/internal/db"
 	"seriestracker/internal/handlers"
+	"seriestracker/internal/middleware"
 )
 
 func main() {
@@ -39,9 +40,11 @@ func main() {
 	mux.HandleFunc("PUT /series/{id}", series.Update)
 	mux.HandleFunc("DELETE /series/{id}", series.Delete)
 
+	handler := middleware.CORS(mux)
+
 	log.Printf("listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("server: %v", err)
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
+	    log.Fatalf("server: %v", err)
 	}
 }
 
