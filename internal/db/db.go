@@ -19,6 +19,9 @@ func Open(path string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		return nil, err
+	}
 	return db, nil
 }
 
