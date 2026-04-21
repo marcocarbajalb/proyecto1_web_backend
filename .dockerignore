@@ -1,0 +1,8 @@
+# flyctl launch added from .gitignore
+**/*.db
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+**/uploads
+**/.env
+fly.toml

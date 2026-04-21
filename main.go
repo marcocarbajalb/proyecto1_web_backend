@@ -25,6 +25,10 @@ func main() {
 		log.Fatalf("db migrate: %v", err)
 	}
 
+	if err := os.MkdirAll(getenv("UPLOADS_DIR", "uploads"), 0755); err != nil {
+		log.Fatalf("creating uploads dir: %v", err)
+	}
+
 	series := &handlers.SeriesHandler{DB: database}
 	uploads := &handlers.UploadHandler{DB: database}
 	ratings := &handlers.RatingHandler{DB: database}

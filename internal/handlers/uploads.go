@@ -16,10 +16,16 @@ import (
 	"seriestracker/internal/models"
 )
 
-const (
-	maxImageSize = 1 << 20
-	uploadsDir   = "uploads"
-)
+const maxImageSize = 1 << 20
+
+var uploadsDir = getUploadsDir()
+
+func getUploadsDir() string {
+	if v := os.Getenv("UPLOADS_DIR"); v != "" {
+		return v
+	}
+	return "uploads"
+}
 
 var allowedImageTypes = map[string]string{
 	"image/jpeg": ".jpg",
