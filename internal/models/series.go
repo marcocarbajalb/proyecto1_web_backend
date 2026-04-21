@@ -12,6 +12,7 @@ type Series struct {
 	CurrentEpisode int       `json:"current_episode"`
 	TotalEpisodes  int       `json:"total_episodes"`
 	ImagePath      *string   `json:"image_path"`
+	Rating         *int      `json:"rating"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -60,4 +61,26 @@ type Pagination struct {
 type PaginatedSeries struct {
 	Data       []Series   `json:"data"`
 	Pagination Pagination `json:"pagination"`
+}
+
+type Rating struct {
+	SeriesID  int64     `json:"series_id"`
+	Rating    int       `json:"rating"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type RatingInput struct {
+	Rating int `json:"rating"`
+}
+
+func (r *RatingInput) Validate() map[string]string {
+	errs := map[string]string{}
+	if r.Rating < 1 || r.Rating > 5 {
+		errs["rating"] = "debe estar entre 1 y 5"
+	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return errs
 }

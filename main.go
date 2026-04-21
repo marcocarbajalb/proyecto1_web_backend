@@ -27,6 +27,7 @@ func main() {
 
 	series := &handlers.SeriesHandler{DB: database}
 	uploads := &handlers.UploadHandler{DB: database}
+	ratings := &handlers.RatingHandler{DB: database}
 
 	mux := http.NewServeMux()
 
@@ -43,6 +44,10 @@ func main() {
 
 	mux.HandleFunc("POST /series/{id}/image", uploads.UploadSeriesImage)
 	mux.HandleFunc("GET /uploads/{filename}", handlers.ServeUpload)
+
+	mux.HandleFunc("GET /series/{id}/rating", ratings.Get)
+	mux.HandleFunc("PUT /series/{id}/rating", ratings.Set)
+	mux.HandleFunc("DELETE /series/{id}/rating", ratings.Delete)
 
 	handler := middleware.CORS(mux)
 
