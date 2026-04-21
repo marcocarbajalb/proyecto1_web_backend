@@ -40,9 +40,11 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	sortOrder := parseSortOrder(r.URL.Query().Get("order"))
 
 	dataQuery := `
-		SELECT id, name, current_episode, total_episodes, image_path, created_at, updated_at
-		FROM series` + whereClause +
-		` ORDER BY ` + sortColumn + ` ` + sortOrder +
+		SELECT s.id, s.name, s.current_episode, s.total_episodes, s.image_path,
+			r.rating, s.created_at, s.updated_at
+		FROM series s
+		LEFT JOIN ratings r ON r.series_id = s.id` + whereClause +
+		` ORDER BY s.` + sortColumn + ` ` + sortOrder +
 		` LIMIT ? OFFSET ?`
 
 	dataArgs := append(args, limit, offset)
@@ -59,7 +61,7 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var s models.Series
 		if err := rows.Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes,
-			&s.ImagePath, &s.CreatedAt, &s.UpdatedAt); err != nil {
+    		&s.ImagePath, &s.Rating, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			log.Printf("list scan: %v", err)
 			writeError(w, http.StatusInternalServerError, "error al leer serie")
 			return
@@ -263,11 +265,13 @@ func (h *SeriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *SeriesHandler) findByID(id int64) (*models.Series, error) {
 	var s models.Series
 	err := h.DB.QueryRow(`
-		SELECT id, name, current_episode, total_episodes, image_path, created_at, updated_at
-		FROM series
-		WHERE id = ?
+		SELECT s.id, s.name, s.current_episode, s.total_episodes, s.image_path,
+		       r.rating, s.created_at, s.updated_at
+		FROM series s
+		LEFT JOIN ratings r ON r.series_id = s.id
+		WHERE s.id = ?
 	`, id).Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes,
-		&s.ImagePath, &s.CreatedAt, &s.UpdatedAt)
+		&s.ImagePath, &s.Rating, &s.CreatedAt, &s.UpdatedAt)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, models.ErrNotFound
