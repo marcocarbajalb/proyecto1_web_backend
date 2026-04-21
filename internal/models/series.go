@@ -49,3 +49,15 @@ func (s *SeriesInput) Validate() map[string]string {
 }
 
 var ErrNotFound = errors.New("not found")
+
+type Pagination struct {
+	Page       int `json:"page"`
+	Limit      int `json:"limit"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages"`
+}
+
+type PaginatedSeries struct {
+	Data       []Series   `json:"data"`
+	Pagination Pagination `json:"pagination"`
+}

@@ -17,22 +17,37 @@ type SeriesHandler struct {
 }
 
 func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
-	query := `
-		SELECT id, name, current_episode, total_episodes, image_path, created_at, updated_at
-		FROM series
-	`
+	page, limit := parsePagination(r)
+	offset := (page - 1) * limit
+
+	whereClause := ""
 	args := []any{}
 
 	if q := strings.TrimSpace(r.URL.Query().Get("q")); q != "" {
-		query += ` WHERE LOWER(name) LIKE LOWER(?)`
+		whereClause = ` WHERE LOWER(name) LIKE LOWER(?)`
 		args = append(args, "%"+q+"%")
+	}
+
+	var total int
+	countQuery := `SELECT COUNT(*) FROM series` + whereClause
+	if err := h.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		log.Printf("list count: %v", err)
+		writeError(w, http.StatusInternalServerError, "error al contar series")
+		return
 	}
 
 	sortColumn := parseSortColumn(r.URL.Query().Get("sort"))
 	sortOrder := parseSortOrder(r.URL.Query().Get("order"))
-	query += ` ORDER BY ` + sortColumn + ` ` + sortOrder
 
-	rows, err := h.DB.Query(query, args...)
+	dataQuery := `
+		SELECT id, name, current_episode, total_episodes, image_path, created_at, updated_at
+		FROM series` + whereClause +
+		` ORDER BY ` + sortColumn + ` ` + sortOrder +
+		` LIMIT ? OFFSET ?`
+
+	dataArgs := append(args, limit, offset)
+
+	rows, err := h.DB.Query(dataQuery, dataArgs...)
 	if err != nil {
 		log.Printf("list query: %v", err)
 		writeError(w, http.StatusInternalServerError, "error al consultar series")
@@ -40,7 +55,7 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	list := []models.Series{}
+	data := []models.Series{}
 	for rows.Next() {
 		var s models.Series
 		if err := rows.Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes,
@@ -49,10 +64,39 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "error al leer serie")
 			return
 		}
-		list = append(list, s)
+		data = append(data, s)
 	}
 
-	writeJSON(w, http.StatusOK, list)
+	totalPages := (total + limit - 1) / limit
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	writeJSON(w, http.StatusOK, models.PaginatedSeries{
+		Data: data,
+		Pagination: models.Pagination{
+			Page:       page,
+			Limit:      limit,
+			Total:      total,
+			TotalPages: totalPages,
+		},
+	})
+}
+
+func parsePagination(r *http.Request) (page, limit int) {
+	page = 1
+	limit = 10
+
+	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 0 {
+		page = p
+	}
+	if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && l > 0 {
+		if l > 100 {
+			l = 100
+		}
+		limit = l
+	}
+	return page, limit
 }
 
 func parseSortColumn(input string) string {
