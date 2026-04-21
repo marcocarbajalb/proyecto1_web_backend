@@ -9,7 +9,7 @@ Frontend del proyecto: https://github.com/marcocarbajalb/proyecto1_web_frontend
 
 ## Stack
 
-- Go 1.22
+- Go 1.25
 - SQLite (vía `modernc.org/sqlite`)
 - `net/http` de la librería estándar
 
