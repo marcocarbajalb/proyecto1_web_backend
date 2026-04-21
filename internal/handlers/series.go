@@ -28,7 +28,9 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 		args = append(args, "%"+q+"%")
 	}
 
-	query += ` ORDER BY id DESC`
+	sortColumn := parseSortColumn(r.URL.Query().Get("sort"))
+	sortOrder := parseSortOrder(r.URL.Query().Get("order"))
+	query += ` ORDER BY ` + sortColumn + ` ` + sortOrder
 
 	rows, err := h.DB.Query(query, args...)
 	if err != nil {
@@ -51,6 +53,27 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, list)
+}
+
+func parseSortColumn(input string) string {
+	allowed := map[string]string{
+		"name":            "name",
+		"current_episode": "current_episode",
+		"total_episodes":  "total_episodes",
+		"created_at":      "created_at",
+		"id":              "id",
+	}
+	if col, ok := allowed[input]; ok {
+		return col
+	}
+	return "id"
+}
+
+func parseSortOrder(input string) string {
+	if strings.ToLower(input) == "asc" {
+		return "ASC"
+	}
+	return "DESC"
 }
 
 func (h *SeriesHandler) Get(w http.ResponseWriter, r *http.Request) {
