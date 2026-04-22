@@ -40,29 +40,29 @@ type UploadHandler struct {
 func (h *UploadHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	if err := seriesExists(h.DB, id); err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "serie no encontrada")
+			writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 			return
 		}
 		log.Printf("upload check: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al verificar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo verificar la serie.")
 		return
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxImageSize)
 	if err := r.ParseMultipartForm(maxImageSize); err != nil {
-		writeError(w, http.StatusRequestEntityTooLarge, "el archivo supera 1MB")
+		writeError(w, http.StatusRequestEntityTooLarge, "El archivo supera el tamaño máximo permitido de 1 MB.")
 		return
 	}
 
 	file, header, err := r.FormFile("image")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "falta el campo 'image'")
+		writeError(w, http.StatusBadRequest, "Falta el campo \"image\" en el formulario.")
 		return
 	}
 	defer file.Close()
@@ -71,20 +71,20 @@ func (h *UploadHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request
 	n, err := file.Read(buf)
 	if err != nil && err != io.EOF {
 		log.Printf("upload detect: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al leer archivo")
+		writeError(w, http.StatusInternalServerError, "No se pudo leer el archivo.")
 		return
 	}
 	contentType := http.DetectContentType(buf[:n])
 
 	ext, ok := allowedImageTypes[contentType]
 	if !ok {
-		writeError(w, http.StatusUnsupportedMediaType, "solo se aceptan jpg, png o webp")
+		writeError(w, http.StatusUnsupportedMediaType, "Solo se aceptan imágenes en formato JPG, PNG o WEBP.")
 		return
 	}
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		log.Printf("upload seek: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al procesar archivo")
+		writeError(w, http.StatusInternalServerError, "No se pudo procesar el archivo.")
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *UploadHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request
 	dest, err := os.Create(destPath)
 	if err != nil {
 		log.Printf("upload create: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al guardar archivo")
+		writeError(w, http.StatusInternalServerError, "No se pudo guardar el archivo.")
 		return
 	}
 	defer dest.Close()
@@ -103,7 +103,7 @@ func (h *UploadHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request
 	if _, err := io.Copy(dest, file); err != nil {
 		log.Printf("upload copy: %v", err)
 		os.Remove(destPath)
-		writeError(w, http.StatusInternalServerError, "error al guardar archivo")
+		writeError(w, http.StatusInternalServerError, "No se pudo guardar el archivo.")
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *UploadHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request
 	); err != nil {
 		log.Printf("upload update db: %v", err)
 		os.Remove(destPath)
-		writeError(w, http.StatusInternalServerError, "error al actualizar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo actualizar la serie con la nueva imagen.")
 		return
 	}
 
@@ -158,13 +158,13 @@ func sanitizeStaticPath(requested string) (string, bool) {
 func ServeUpload(w http.ResponseWriter, r *http.Request) {
 	path, ok := sanitizeStaticPath(r.URL.Path)
 	if !ok {
-		writeError(w, http.StatusBadRequest, "ruta inválida")
+		writeError(w, http.StatusBadRequest, "La ruta solicitada no es válida.")
 		return
 	}
 
 	info, err := os.Stat(path)
 	if err != nil || info.IsDir() {
-		writeError(w, http.StatusNotFound, "archivo no encontrado")
+		writeError(w, http.StatusNotFound, "El archivo solicitado no existe.")
 		return
 	}
 

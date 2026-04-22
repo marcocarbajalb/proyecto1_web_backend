@@ -32,7 +32,7 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	countQuery := `SELECT COUNT(*) FROM series` + whereClause
 	if err := h.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
 		log.Printf("list count: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al contar series")
+		writeError(w, http.StatusInternalServerError, "No se pudo consultar la lista de series.")
 		return
 	}
 
@@ -52,7 +52,7 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.DB.Query(dataQuery, dataArgs...)
 	if err != nil {
 		log.Printf("list query: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al consultar series")
+		writeError(w, http.StatusInternalServerError, "No se pudo consultar la lista de series.")
 		return
 	}
 	defer rows.Close()
@@ -63,7 +63,7 @@ func (h *SeriesHandler) List(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&s.ID, &s.Name, &s.CurrentEpisode, &s.TotalEpisodes,
     		&s.ImagePath, &s.Rating, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			log.Printf("list scan: %v", err)
-			writeError(w, http.StatusInternalServerError, "error al leer serie")
+			writeError(w, http.StatusInternalServerError, "No se pudo leer una de las series.")
 			return
 		}
 		data = append(data, s)
@@ -125,18 +125,18 @@ func parseSortOrder(input string) string {
 func (h *SeriesHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	s, err := h.findByID(id)
 	if errors.Is(err, models.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "serie no encontrada")
+		writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 		return
 	}
 	if err != nil {
 		log.Printf("get series: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al consultar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo consultar la serie.")
 		return
 	}
 
@@ -146,14 +146,14 @@ func (h *SeriesHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	
 	if r.Header.Get("Content-Type") != "application/json" {
-		writeError(w, http.StatusUnsupportedMediaType, "content-type debe ser application/json")
+		writeError(w, http.StatusUnsupportedMediaType, "El Content-Type debe ser application/json.")
 		return
 	}
 	
 	var input models.SeriesInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Printf("create decode: %v", err)
-		writeError(w, http.StatusBadRequest, "json inválido")
+		writeError(w, http.StatusBadRequest, "El cuerpo de la petición no es un JSON válido.")
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	`, input.Name, input.CurrentEpisode, input.TotalEpisodes)
 	if err != nil {
 		log.Printf("create insert error: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al crear serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo crear la serie.")
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *SeriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	s, err := h.findByID(id)
 	if err != nil {
 		log.Printf("create findByID error: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al crear serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo crear la serie.")
 		return
 	}
 
@@ -197,13 +197,13 @@ func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	var input models.SeriesInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		writeError(w, http.StatusBadRequest, "json inválido")
+		writeError(w, http.StatusBadRequest, "El cuerpo de la petición no es un JSON válido.")
 		return
 	}
 
@@ -219,20 +219,20 @@ func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	`, input.Name, input.CurrentEpisode, input.TotalEpisodes, id)
 	if err != nil {
 		log.Printf("update: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al actualizar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo actualizar la serie.")
 		return
 	}
 
 	affected, _ := res.RowsAffected()
 	if affected == 0 {
-		writeError(w, http.StatusNotFound, "serie no encontrada")
+		writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 		return
 	}
 
 	s, err := h.findByID(id)
 	if err != nil {
 		log.Printf("update findByID: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al leer serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo leer la serie actualizada.")
 		return
 	}
 
@@ -242,20 +242,20 @@ func (h *SeriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *SeriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	res, err := h.DB.Exec(`DELETE FROM series WHERE id = ?`, id)
 	if err != nil {
 		log.Printf("delete: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al eliminar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo eliminar la serie.")
 		return
 	}
 
 	affected, _ := res.RowsAffected()
 	if affected == 0 {
-		writeError(w, http.StatusNotFound, "serie no encontrada")
+		writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 		return
 	}
 

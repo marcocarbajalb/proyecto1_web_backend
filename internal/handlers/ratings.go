@@ -18,17 +18,17 @@ type RatingHandler struct {
 func (h *RatingHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	if err := seriesExists(h.DB, id); err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "serie no encontrada")
+			writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 			return
 		}
 		log.Printf("rating get check: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al verificar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo verificar la serie.")
 		return
 	}
 
@@ -40,12 +40,12 @@ func (h *RatingHandler) Get(w http.ResponseWriter, r *http.Request) {
 	`, id).Scan(&rating.SeriesID, &rating.Rating, &rating.CreatedAt, &rating.UpdatedAt)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		writeError(w, http.StatusNotFound, "la serie no tiene rating")
+		writeError(w, http.StatusNotFound, "Esta serie todavía no tiene rating asignado.")
 		return
 	}
 	if err != nil {
 		log.Printf("rating get: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al obtener rating")
+		writeError(w, http.StatusInternalServerError, "No se pudo obtener el rating de la serie.")
 		return
 	}
 
@@ -54,29 +54,29 @@ func (h *RatingHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *RatingHandler) Set(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-		writeError(w, http.StatusUnsupportedMediaType, "content-type debe ser application/json")
+		writeError(w, http.StatusUnsupportedMediaType, "El Content-Type debe ser application/json.")
 		return
 	}
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	if err := seriesExists(h.DB, id); err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "serie no encontrada")
+			writeError(w, http.StatusNotFound, "No se encontró una serie con ese ID.")
 			return
 		}
 		log.Printf("rating set check: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al verificar serie")
+		writeError(w, http.StatusInternalServerError, "No se pudo verificar la serie.")
 		return
 	}
 
 	var input models.RatingInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		writeError(w, http.StatusBadRequest, "json inválido")
+		writeError(w, http.StatusBadRequest, "El cuerpo de la petición no es un JSON válido.")
 		return
 	}
 
@@ -93,7 +93,7 @@ func (h *RatingHandler) Set(w http.ResponseWriter, r *http.Request) {
 	`, id, input.Rating)
 	if err != nil {
 		log.Printf("rating set: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al guardar rating")
+		writeError(w, http.StatusInternalServerError, "No se pudo guardar el rating.")
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *RatingHandler) Set(w http.ResponseWriter, r *http.Request) {
 		FROM ratings WHERE series_id = ?
 	`, id).Scan(&rating.SeriesID, &rating.Rating, &rating.CreatedAt, &rating.UpdatedAt); err != nil {
 		log.Printf("rating set read: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al leer rating")
+		writeError(w, http.StatusInternalServerError, "No se pudo leer el rating guardado.")
 		return
 	}
 
@@ -113,20 +113,20 @@ func (h *RatingHandler) Set(w http.ResponseWriter, r *http.Request) {
 func (h *RatingHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "id inválido")
+		writeError(w, http.StatusBadRequest, "El ID proporcionado no es válido.")
 		return
 	}
 
 	res, err := h.DB.Exec(`DELETE FROM ratings WHERE series_id = ?`, id)
 	if err != nil {
 		log.Printf("rating delete: %v", err)
-		writeError(w, http.StatusInternalServerError, "error al eliminar rating")
+		writeError(w, http.StatusInternalServerError, "No se pudo eliminar el rating.")
 		return
 	}
 
 	affected, _ := res.RowsAffected()
 	if affected == 0 {
-		writeError(w, http.StatusNotFound, "la serie no tiene rating")
+		writeError(w, http.StatusNotFound, "Esta serie no tiene rating asignado.")
 		return
 	}
 

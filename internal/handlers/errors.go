@@ -24,7 +24,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 
 func writeValidationError(w http.ResponseWriter, details map[string]string) {
 	writeJSON(w, http.StatusBadRequest, ErrorResponse{
-		Error:   "validación fallida",
+		Error:   "Los datos enviados no son válidos.",
 		Details: details,
 	})
 }
