@@ -28,19 +28,19 @@ func (s *SeriesInput) Validate() map[string]string {
 
 	s.Name = strings.TrimSpace(s.Name)
 	if s.Name == "" {
-		errs["name"] = "el nombre es obligatorio"
+		errs["name"] = "El nombre es obligatorio."
 	} else if len(s.Name) > 200 {
-		errs["name"] = "el nombre no puede superar 200 caracteres"
+		errs["name"] = "El nombre no puede superar los 200 caracteres."
 	}
 
 	if s.TotalEpisodes < 1 {
-		errs["total_episodes"] = "debe ser al menos 1"
+		errs["total_episodes"] = "El total de episodios debe ser al menos 1."
 	}
 	if s.CurrentEpisode < 0 {
-		errs["current_episode"] = "no puede ser negativo"
+		errs["current_episode"] = "El episodio actual no puede ser negativo."
 	}
 	if s.CurrentEpisode > s.TotalEpisodes {
-		errs["current_episode"] = "no puede ser mayor al total de episodios"
+		errs["current_episode"] = "El episodio actual no puede ser mayor al total de episodios de la serie."
 	}
 
 	if len(errs) == 0 {
@@ -77,7 +77,7 @@ type RatingInput struct {
 func (r *RatingInput) Validate() map[string]string {
 	errs := map[string]string{}
 	if r.Rating < 1 || r.Rating > 5 {
-		errs["rating"] = "debe estar entre 1 y 5"
+		errs["rating"] = "El rating debe estar entre 1 y 5 estrellas."
 	}
 	if len(errs) == 0 {
 		return nil
