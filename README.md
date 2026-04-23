@@ -24,12 +24,40 @@ go run .
 
 El servidor arranca en `http://localhost:8080`. La base de datos (`series.db`) y la carpeta `uploads/` se crean automáticamente al primer arranque.
 
+## Estructura del proyecto
+
+```
+proyecto1_web_backend/
+├── main.go             # entrypoint y configuración del router
+├── go.mod
+├── Dockerfile
+├── fly.toml
+├── internal/
+│   ├── db/
+│   │   ├── db.go       # conexión y migraciones
+│   │   └── schema.sql  # definición de tablas
+│   ├── models/
+│   │   └── series.go   # structs y validación
+│   ├── handlers/
+│   │   ├── series.go   # endpoints CRUD de series
+│   │   ├── ratings.go  # endpoints de ratings
+│   │   ├── uploads.go  # subida y servido de imágenes
+│   │   └── errors.go   # helpers para respuestas de error
+│   └── middleware/
+│       └── cors.go     # middleware de CORS
+└── uploads/            # archivos subidos (está en .gitignore)
+```
+
+El paquete `internal/` contiene toda la lógica del servidor separada por responsabilidad. El `main.go` se encarga solo de conectar piezas: abre la base de datos, registra las rutas en el router y levanta el servidor.
+
 ### Variables de entorno
 
-| Variable  | Default      | Descripción                  |
-|-----------|--------------|------------------------------|
-| `PORT`    | `8080`       | Puerto donde escucha el servidor |
-| `DB_PATH` | `series.db`  | Ruta al archivo de SQLite        |
+| Variable         | Default      | Descripción                                  |
+|------------------|--------------|----------------------------------------------|
+| `PORT`           | `8080`       | Puerto donde escucha el servidor             |
+| `DB_PATH`        | `series.db`  | Ruta al archivo de SQLite                    |
+| `UPLOADS_DIR`    | `uploads`    | Carpeta donde se guardan las imágenes        |
+| `ALLOWED_ORIGIN` | `*`          | Origen permitido para CORS (dominio del frontend) |
 
 ## Endpoints
 
@@ -62,7 +90,7 @@ El servidor arranca en `http://localhost:8080`. La base de datos (`series.db`) y
 
 CORS (Cross-Origin Resource Sharing) es un mecanismo del navegador que restringe las peticiones cuando el cliente y el servidor están en distintos orígenes, por ejemplo diferentes puertos o dominios. En este proyecto, como el frontend y el backend están separados, el navegador bloquea esas solicitudes por defecto.
 
-Para permitir la comunicación, el backend agrega ciertos headers en la respuesta, como `Access-Control-Allow-Origin`, que le indican al navegador que la petición está autorizada. Durante el desarrollo lo configuré de forma abierta para evitar problemas.
+Para permitir la comunicación, el backend agrega ciertos headers en la respuesta, como `Access-Control-Allow-Origin`, que le indican al navegador que la petición está autorizada. En desarrollo se permite cualquier origen para facilitar el trabajo local. En producción, el origen permitido se configura a través de la variable de entorno `ALLOWED_ORIGIN`, de forma que solo el frontend deployado puede hacer peticiones al backend.
 
 Además, el servidor debe manejar algunas solicitudes previas que el navegador envía automáticamente para verificar si la petición está permitida, respondiendo de forma adecuada para que luego la solicitud principal se pueda completar.
 
@@ -86,6 +114,12 @@ Algo que me pareció importante fue entender mejor cómo manejar las validacione
 
 En general, sí volvería a usar esta combinación. Me pareció práctica, fácil de mantener y no tan complicada de desplegar. Además, el rendimiento fue bastante bueno sin tener que optimizar demasiado.
 
-## Screenshot
+## Screenshots
 
-![App funcionando](screenshots/app.png)
+Vista principal de la aplicación:
+
+![Vista principal](screenshots/main.png)
+
+Paginación y controles de navegación:
+
+![Paginación](screenshots/pagination.png)
