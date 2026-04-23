@@ -28,3 +28,4 @@ primary_region = 'dfw'
 [env]
   DB_PATH = "/data/series.db"
   UPLOADS_DIR = "/data/uploads"
+  ALLOWED_ORIGIN = "https://tracker-de-series.vercel.app"
